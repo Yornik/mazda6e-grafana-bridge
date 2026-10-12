@@ -16,7 +16,7 @@
       }
     ]
   },
-  "description": "Mazda 6e battery, charging, body, cabin and tire state from mazda6e-grafana-bridge.",
+  "description": "Unofficial: not made, endorsed or supported by Mazda. Mazda and Mazda 6e are trademarks of Mazda Motor Corporation. Battery, charging, body, cabin and tire state from mazda6e-grafana-bridge.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,

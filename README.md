@@ -5,6 +5,12 @@ for it. It logs in with the Mazda app account, polls the car's condition on an
 interval and publishes battery, charging, driving, body, cabin and tire state
 as Prometheus metrics.
 
+> [!IMPORTANT]
+> **Unofficial project.** This isn't made, endorsed or supported by Mazda Motor
+> Corporation or Changan. **Mazda**, **Mazda 6e** and all related names and
+> logos are trademarks of Mazda Motor Corporation. See
+> [Disclaimer & trademarks](#disclaimer--trademarks).
+
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/dashboard-light.png">
   <img alt="The Mazda 6e Grafana dashboard, rendered with test data" src="docs/dashboard-dark.png" width="600">
@@ -275,13 +281,27 @@ versions current, with a three-day minimum release age.
 
 ## Disclaimer & trademarks
 
-This is an independent, unofficial project. Mazda Motor Corporation and
-Changan Automobile don't affiliate with, authorize, sponsor or endorse it.
-**Mazda** and **Mazda 6e** are trademarks of Mazda Motor Corporation. They are
-used here only to identify the vehicle this software works with.
+**This is an independent, unofficial project.** It is not made, endorsed,
+sponsored, authorized or supported by Mazda Motor Corporation, its
+subsidiaries or national distributors, or by Changan Automobile, which runs the
+backend the app talks to. None of them has any affiliation with it.
 
-The exporter talks to the same cloud API as the official app, using your own
-account. Mazda can change or restrict that API at any time.
+**Trademarks.** **Mazda**, **Mazda 6e**, **MyMazda**, the Mazda logo and all
+related names, marks and logos are trademarks or registered trademarks of Mazda
+Motor Corporation. They are used here only to identify the vehicle this
+software works with (nominative use). That use doesn't imply any affiliation
+with or endorsement by Mazda. This project doesn't use the Mazda logo.
+
+**No support.** Mazda doesn't support this software. Don't contact Mazda,
+your dealer or Mazda customer service about it; open an issue in this
+repository instead. Using it doesn't change what Mazda supports for your car
+or account.
+
+**Use at your own risk.** The exporter only reads data, but it uses your own
+account against the same undocumented cloud API as the official app. Mazda can
+change, rate-limit or block that API at any time, and could in principle act
+on accounts that use it. The software comes without any warranty. See
+[LICENSE](LICENSE).
 
 ## License
 

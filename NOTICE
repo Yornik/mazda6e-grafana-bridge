@@ -8,3 +8,8 @@ payloads (mazda6e_bridge/api.py), the credential encryption
 (mazda6e_bridge/crypto.py) and the meaning of the vehicle-condition fields
 (mazda6e_bridge/metrics.py). The code was rewritten as a synchronous,
 read-only client; all vehicle-control commands were left out.
+
+This is an independent, unofficial project, not made, endorsed or supported by
+Mazda Motor Corporation or Changan Automobile. Mazda, Mazda 6e and related
+names and logos are trademarks of Mazda Motor Corporation, used only to
+identify the vehicle this software works with.
