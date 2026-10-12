@@ -5,6 +5,20 @@ for it. It logs in with the Mazda app account, polls the car's condition on an
 interval and publishes battery, charging, driving, body, cabin and tire state
 as Prometheus metrics.
 
+> [!WARNING]
+> **The secrets you give it can control your car.** This bridge only reads,
+> and CI enforces that (see [Read-only, and how that's enforced](#read-only-and-how-thats-enforced)).
+> But `MAZDA_EMAIL` + `MAZDA_PASSWORD` + a verified `MAZDA_DEVICE_ID` together
+> are a full login that skips Mazda's email code. Anyone holding all three can
+> use other software to start climate control, flash the lights and sound the
+> horn, or change the charge limit. Unlocking the doors and opening windows or
+> the trunk also needs your six-digit control PIN, which this bridge never asks
+> for or stores. Protect the three values like a car key: keep them in an
+> encrypted secret (SOPS, Vault, …), never in git, logs or screenshots. If they
+> leak, change your Mazda password in the app right away, and the control PIN
+> too if it may have leaked. Whether Mazda also ends sessions that are already
+> logged in isn't documented, so don't count on it.
+
 > [!IMPORTANT]
 > **Unofficial project.** This isn't made, endorsed or supported by Mazda Motor
 > Corporation or Changan. **Mazda**, **Mazda 6e** and all related names and
@@ -16,8 +30,10 @@ as Prometheus metrics.
   <img alt="The Mazda 6e Grafana dashboard, rendered with test data" src="docs/dashboard-dark.png" width="600">
 </picture>
 
-- **Read-only.** It can't lock, unlock, open, climate-control or charge-limit
-  the car. The command endpoints were left out of the code.
+- **Read-only, enforced.** It can't lock, unlock, open, climate-control or
+  charge-limit the car. The command endpoints aren't in the code, the client
+  refuses any endpoint outside a fixed read-only list, and a CI job fails if
+  that ever changes.
 - **Stateless.** Configuration comes from environment variables only. Tokens
   live in memory. An expired token is refreshed, and a refused refresh falls
   back to a new password login with the same device ID.
@@ -28,6 +44,40 @@ as Prometheus metrics.
 The API knowledge (endpoints, headers, credential encryption, field meanings)
 comes from [fano0001/home-assistant-mazda-6e](https://github.com/fano0001/home-assistant-mazda-6e),
 the Home Assistant integration. See [NOTICE](NOTICE).
+
+## Read-only, and how that's enforced
+
+Read-only rests on three layers. You can check each one yourself in a few
+minutes:
+
+1. **No write code.** Only seven endpoints exist in the package: log in, send
+   and check the device email code, refresh the token, list vehicles, read the
+   vehicle condition. The command routes (`car-control`, `security-code`,
+   `serial-no`, …) and the code that signs commands were never ported.
+2. **Runtime allowlist.** Every request goes through one function,
+   `MazdaClient._post_raw`, which raises `ReadOnlyViolation` for any path not
+   in `READ_ONLY_PATHS` ([`api.py`](mazda6e_bridge/api.py)) before anything
+   is sent. That error deliberately isn't caught, so the process stops instead
+   of carrying on.
+3. **CI guard.** The `Read-only guard` job runs
+   [`scripts/check_read_only.py`](scripts/check_read_only.py) on every pull
+   request and before every release. It fails if:
+   - the allowlist differs from the copy pinned in the script;
+   - any string in the code looks like an API path that isn't allowlisted;
+   - any string or name refers to a command route or field (`car-control`,
+     `security-code`, `rcToken`, `control_pin`, …);
+   - anything calls `.sign()` or `.decrypt()`, or saves a private key;
+   - the HTTP session is used anywhere other than `_post_raw`.
+
+   Tests also prove the guard catches each of these, and that the client
+   refuses a door-unlock path without sending anything.
+
+**One caveat, stated plainly.** Mazda's login call requires a public key that
+it would use to verify signed commands. The bridge generates a fresh key pair
+for each login, sends the public half, and throws the private half away
+without ever storing or using it. The bridge's own session therefore can't
+sign a command even if code for it were added. Your credentials still can,
+from other software; see the warning at the top.
 
 ## Metrics
 
@@ -269,6 +319,7 @@ is published:
 | Job | What it checks |
 | --- | --- |
 | Lint | `ruff check`, `ruff format`, `actionlint`, `hadolint` |
+| Read-only guard | No write endpoint, command field, signing call or allowlist change in the package. See [Read-only, and how that's enforced](#read-only-and-how-thats-enforced). |
 | Test | `pytest` with coverage in the run summary. The tests also check that every metric the dashboard queries is exported. |
 | Dashboard | Runs every dashboard query through `promtool`, the Prometheus parser |
 | Audit | `pip-audit` over the runtime dependencies |

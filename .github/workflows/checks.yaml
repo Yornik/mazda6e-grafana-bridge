@@ -41,6 +41,22 @@ jobs:
       - name: hadolint
         run: docker run --rm -i hadolint/hadolint:v2.15.1 < Dockerfile
 
+  # Its own job so a red cross names the problem: the bridge holds credentials
+  # that can drive the car, so "read-only" is checked here, not promised.
+  # See scripts/check_read_only.py for exactly what it rejects.
+  read-only:
+    name: Read-only guard (no write API)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - run: pip install -r requirements.txt
+      - run: python scripts/check_read_only.py
+
   test:
     name: Test (pytest)
     runs-on: ubuntu-latest

@@ -36,6 +36,23 @@ HEADERS_BASE = {
 # Shown to the account owner in the "new device signed in" email.
 DEVICE_NAME = "mazda6e-grafana-bridge"
 
+# Every path this client may call. All of them read: log in, verify this
+# device, renew the token, list vehicles, read their condition. _post_raw
+# refuses anything else before a byte leaves the process, and CI
+# (scripts/check_read_only.py) fails if this set changes or if a write route
+# (car-control, security-code, serial-no, ...) appears anywhere in the package.
+READ_ONLY_PATHS = frozenset(
+    {
+        "/cma-app-auth/api/login/email-pass-in/v2",
+        "/cma-app-auth/api/auth/refresh-token",
+        "/cma-app-user/api/send-email/device-login/send",
+        "/cma-app-user/api/login-device/email-verify",
+        "/cma-app-user/api/vehicle/vehicles",
+        "/cma-app-user/api/car/vehicles",
+        "/cma-app-car-condition/api/vehicle/condition/v2",
+    }
+)
+
 TOKEN_EXPIRED = "APP_1_1_02_004"  # noqa: S105 - an error code, not a secret
 
 # What the condition endpoint is asked to include. The flags are the ones the
@@ -68,6 +85,14 @@ class MazdaAuthError(MazdaError):
 
 class DeviceNotVerified(MazdaAuthError):
     """The device ID has not been confirmed with the emailed code yet."""
+
+
+class ReadOnlyViolation(RuntimeError):
+    """Code tried to call a path outside READ_ONLY_PATHS.
+
+    Deliberately not a MazdaError: the poller swallows those and keeps going,
+    while this one is a bug that has to stop the process.
+    """
 
 
 @dataclass(frozen=True)
@@ -115,6 +140,8 @@ class MazdaClient:
     # -- transport ---------------------------------------------------------
 
     def _post_raw(self, path: str, body: dict, headers: dict) -> dict:
+        if path not in READ_ONLY_PATHS:
+            raise ReadOnlyViolation(f"refusing to call {path}: not a read-only endpoint")
         try:
             resp = self.session.post(
                 f"{self.base_url}{path}", json=body, headers=headers, timeout=self.timeout
