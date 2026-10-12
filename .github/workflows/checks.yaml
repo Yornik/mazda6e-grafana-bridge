@@ -1,0 +1,140 @@
+name: checks
+
+# The jobs a change has to pass. They live in their own workflow so both release
+# paths can list them in `needs`: ci.yaml calls this on every pull request and
+# push, release-please.yaml before it publishes an image, so a release can never
+# be built from a commit whose checks are red.
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  # Keep in step with the Dockerfile's python tag, or CI tests a different
+  # interpreter from the one that ships. Renovate moves both together.
+  PYTHON_VERSION: '3.14'
+  # renovate: datasource=github-releases depName=prometheus/prometheus
+  PROMETHEUS_VERSION: v3.14.0
+
+# Every action is pinned to a commit digest, not a tag: a tag is mutable and
+# whoever can move it can run arbitrary code with this workflow's token. The
+# trailing comment is the human-readable version, and is the exact format
+# Renovate reads and rewrites (helpers:pinGitHubActionDigests in renovate.json).
+
+jobs:
+  lint:
+    name: Lint (ruff, actionlint, hadolint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check --output-format=github .
+      - run: ruff format --check .
+      - name: actionlint
+        run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12 -color
+      - name: hadolint
+        run: docker run --rm -i hadolint/hadolint:v2.15.1 < Dockerfile
+
+  # Its own job so a red cross names the problem: the bridge holds credentials
+  # that can drive the car, so "read-only" is checked here, not promised.
+  # See scripts/check_read_only.py for exactly what it rejects.
+  read-only:
+    name: Read-only guard (no write API)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - run: pip install -r requirements.txt
+      - run: python scripts/check_read_only.py
+
+  test:
+    name: Test (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      # No coverage floor on purpose: a threshold fails the day someone adds
+      # untestable wiring. The total goes in the run summary so a drop is seen.
+      - run: pytest --cov=mazda6e_bridge --cov-report=term-missing:skip-covered | tee pytest.out
+      - name: Record the coverage total
+        run: grep '^TOTAL' pytest.out >> "$GITHUB_STEP_SUMMARY"
+
+  dashboard:
+    name: Dashboard (PromQL parses)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # The pytest suite already checks that every metric the dashboard asks
+      # for is exported. This runs each query through Prometheus' own parser,
+      # which catches the typo pytest cannot: a query Grafana would show empty.
+      - name: Install promtool
+        run: |
+          set -euo pipefail
+          v="${PROMETHEUS_VERSION#v}"
+          curl -fsSL "https://github.com/prometheus/prometheus/releases/download/${PROMETHEUS_VERSION}/prometheus-${v}.linux-amd64.tar.gz" \
+            | tar xz --strip-components=1 -C /usr/local/bin "prometheus-${v}.linux-amd64/promtool"
+      - name: Check every dashboard query
+        run: |
+          python3 scripts/dashboard_rules.py dashboards/mazda6e.json > /tmp/dashboard-rules.json
+          promtool check rules /tmp/dashboard-rules.json
+
+  audit:
+    name: Dependency audit (pip-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      # Only the runtime requirements: they are what ships in the image.
+      - run: pip install pip-audit==2.10.1
+      - run: pip-audit --strict -r requirements.txt
+
+  image:
+    name: Build image and smoke-test it
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          push: false
+          load: true
+          tags: mazda6e-grafana-bridge:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      # Runs the image the way the cluster does (read-only root, uid 65532)
+      # against an API address nothing listens on. A healthy image starts,
+      # serves /metrics and reports the failed poll instead of crashing.
+      - name: Smoke test
+        run: |
+          set -euo pipefail
+          docker run -d --name bridge --read-only --cap-drop ALL -p 9120:9120 \
+            -e MAZDA_EMAIL=ci@example.invalid -e MAZDA_PASSWORD=x \
+            -e MAZDA_DEVICE_ID=00000000-0000-0000-0000-000000000000 \
+            -e MAZDA_API_BASE_URL=http://127.0.0.1:9 \
+            mazda6e-grafana-bridge:ci
+          for _ in $(seq 1 30); do
+            if curl -fsS localhost:9120/metrics > metrics.txt; then break; fi
+            sleep 1
+          done
+          docker logs bridge
+          grep -x 'mazda6e_scrape_success 0.0' metrics.txt
+          test "$(docker inspect -f '{{.State.Running}}' bridge)" = true
+          test "$(docker exec bridge id -u)" = 65532
