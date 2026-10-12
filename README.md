@@ -330,6 +330,18 @@ Releases are cut by release-please from Conventional Commits and pushed to
 action is pinned to a commit digest. Renovate keeps the digests and tool
 versions current, with a three-day minimum release age.
 
+## Security
+
+See [SECURITY.md](SECURITY.md). In short:
+
+- **A problem in this project**, such as a read-only bypass or leaked
+  credentials: report it privately via **Security → Report a vulnerability**,
+  never in a public issue.
+- **A problem in Mazda's or Changan's systems**, such as the cloud API, the app
+  or the car: don't publish it, here or anywhere. Mazda has no published
+  disclosure channel, so SECURITY.md lists coordinators (JPCERT/CC, EU
+  national CSIRTs, CERT/CC) that get reports to the right team.
+
 ## Disclaimer & trademarks
 
 **This is an independent, unofficial project.** It is not made, endorsed,
