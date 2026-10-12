@@ -1,0 +1,10 @@
+mazda6e-grafana-bridge
+Copyright 2026 Yornik Heyl
+
+This product contains code adapted from home-assistant-mazda-6e
+(https://github.com/fano0001/home-assistant-mazda-6e), licensed under the
+Apache License, Version 2.0. Adapted: the API endpoints, request headers and
+payloads (mazda6e_bridge/api.py), the credential encryption
+(mazda6e_bridge/crypto.py) and the meaning of the vehicle-condition fields
+(mazda6e_bridge/metrics.py). The code was rewritten as a synchronous,
+read-only client; all vehicle-control commands were left out.
