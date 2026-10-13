@@ -111,7 +111,7 @@ All per-vehicle series carry a `vin` label.
 | `mazda6e_cabin_pm25_micrograms_per_cubic_meter` | | Cabin PM2.5 |
 | `mazda6e_climate_feature_on` | `feature` | `ac`, `defrost`, `steering_wheel_heater` |
 | `mazda6e_seat_mode` / `mazda6e_seat_level` | `seat`, (`mode`) | Seat heating/ventilation |
-| `mazda6e_location_latitude_degrees` / `..._longitude_degrees` | | Only with `EXPORT_LOCATION=true` |
+| `mazda6e_location_latitude_degrees` / `..._longitude_degrees` | | Only with `EXPORT_LOCATION=true`, and only if the car reports a position. See [Location](#location). |
 | `mazda6e_scrape_success` | — | `1` if the last poll succeeded |
 | `mazda6e_last_success_timestamp_seconds` | — | Time of the last successful poll |
 | `mazda6e_vehicle_scrape_success` | | Per-vehicle result of the last poll |
@@ -129,12 +129,27 @@ disappears, its series is removed, so a missing reading never shows as `0`.
 | `MAZDA_DEVICE_ID` | _(required)_ | A UUID that identifies this exporter to Mazda. Generate it once and keep it. |
 | `POLL_INTERVAL_SECONDS` | `300` | Seconds between polls (minimum 60) |
 | `LISTEN_PORT` | `9120` | Port the `/metrics` endpoint listens on |
-| `EXPORT_LOCATION` | `false` | Publish the car's GPS position |
+| `EXPORT_LOCATION` | `false` | Publish the car's GPS position, if it reports one. See [Location](#location). |
 | `REQUEST_TIMEOUT_SECONDS` | `30` | Timeout for each HTTP call to Mazda |
 | `MAZDA_API_BASE_URL` | Europe backend | Override for testing only |
 
 Only the **Europe** backend is supported. Asian accounts read their status over
 MQTT, which this exporter doesn't implement.
+
+### Location
+
+`EXPORT_LOCATION=true` can publish nothing. On the Mazda 6e this was tested
+with (Europe backend, 2026-10-13), the vehicle condition reply had no
+`location` section at all, although the request asks for one, and no other
+field in the reply held a position. The latitude and longitude series then
+stay absent and the dashboard's map stays empty. Whether a setting in the car
+or the app changes that isn't known.
+
+The field names the exporter reads (`latitude`, `lat`, `gpsLatitude`,
+`longitude`, `lng`, `lon`, `gpsLongitude`) are unconfirmed. They come from the
+Home Assistant integration, whose code notes that it hasn't seen a position
+either. If your car does report one, please open an issue with the shape of
+the `location` object: its key names, not your coordinates.
 
 ## Getting started
 
@@ -216,7 +231,8 @@ scrape interval is plenty. Then import the dashboard; see
 - **Body:** door, trunk, window, lock and lamp timelines.
 - **Tires:** current pressures and history.
 - **Cabin:** temperatures, humidity, PM2.5, climate and seat timelines.
-- **Location:** last known position. Needs `EXPORT_LOCATION=true`.
+- **Location:** last known position. Needs `EXPORT_LOCATION=true` and a car
+  that reports a position; see [Location](#location).
 - **Exporter:** poll health.
 
 Battery and charging at a glance:
