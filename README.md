@@ -141,11 +141,6 @@ MQTT, which this exporter doesn't implement.
 You need a Mazda app account that already has the car on it, and Docker, or
 Python 3.12+ for running from source.
 
-> **Before the first release:** `ghcr.io/yornik/mazda6e-grafana-bridge` only
-> exists once release-please has published v0.1.0. Until then, build it
-> yourself with `docker build -t ghcr.io/yornik/mazda6e-grafana-bridge:latest .`
-> and use the commands below unchanged.
-
 ### 1. Pick a device ID and keep it
 
 The device ID tells Mazda which "phone" is signing in. Generate it once and
@@ -275,7 +270,7 @@ sops --encrypt --in-place mazda6e-api-secret.enc.yaml
 ```yaml
 containers:
   - name: mazda6e-bridge
-    image: ghcr.io/yornik/mazda6e-grafana-bridge:v0.1.0
+    image: ghcr.io/yornik/mazda6e-grafana-bridge:v1.0.0
     envFrom:
       - secretRef:
           name: mazda6e-api
@@ -289,9 +284,9 @@ Secret exists and before relying on the exporter:
 
 ```bash
 kubectl -n monitoring run mazda6e-verify --rm -it --restart=Never \
-  --image=ghcr.io/yornik/mazda6e-grafana-bridge:v0.1.0 \
+  --image=ghcr.io/yornik/mazda6e-grafana-bridge:v1.0.0 \
   --overrides='{"spec":{"containers":[{"name":"mazda6e-verify",
-    "image":"ghcr.io/yornik/mazda6e-grafana-bridge:v0.1.0",
+    "image":"ghcr.io/yornik/mazda6e-grafana-bridge:v1.0.0",
     "args":["verify-device"],"stdin":true,"tty":true,
     "envFrom":[{"secretRef":{"name":"mazda6e-api"}}]}]}}'
 ```
