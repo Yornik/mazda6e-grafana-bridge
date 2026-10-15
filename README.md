@@ -89,7 +89,7 @@ All per-vehicle series carry a `vin` label.
 | `mazda6e_battery_soc_percent` | | State of charge in % |
 | `mazda6e_range_km` | | Remaining range in km |
 | `mazda6e_odometer_km` | | Odometer in km |
-| `mazda6e_speed_kmh` | | Speed in km/h. Implausible values over 250 are dropped. |
+| `mazda6e_speed_kmh` | | Speed in km/h, if the car reports it. Implausible values over 250 are dropped. See [Speed](#speed). |
 | `mazda6e_vehicle_state` | `state` | One-hot: `driving` / `parked` / `unknown` |
 | `mazda6e_power_state` | `state` | One-hot: `off` / `accessory` / `on` / `unknown` |
 | `mazda6e_online` | | `1` if the car is connected to the Mazda cloud |
@@ -150,6 +150,17 @@ The field names the exporter reads (`latitude`, `lat`, `gpsLatitude`,
 Home Assistant integration, whose code notes that it hasn't seen a position
 either. If your car does report one, please open an issue with the shape of
 the `location` object: its key names, not your coordinates.
+
+### Speed
+
+On the same Mazda 6e (Europe backend, 2026-10-13 to 2026-10-15),
+`mazda6e_speed_kmh` never changed. During a drive of about 33 km the vehicle
+state stayed Parked in every poll, while the odometer did count the distance.
+The car seems to update its cloud condition mostly while parked, so the
+exporter has no live driving data to read. The dashboard therefore has no speed
+panel; Distance per day, from the odometer, shows the driving instead. The
+metric stays in the exporter in case a car or a firmware update does report
+speed.
 
 ## Getting started
 
@@ -227,7 +238,7 @@ scrape interval is plenty. Then import the dashboard; see
 - **Overview:** state of charge, range, charge state, locks, odometer and data age.
 - **Battery & charging:** SoC against the charge limit, range, AC/DC current,
   plug/charge timeline and time to limit.
-- **Driving:** distance per day, vehicle and power state, speed.
+- **Driving:** distance per day, vehicle and power state. There is no speed panel; see [Speed](#speed).
 - **Body:** door, trunk, window, lock and lamp timelines.
 - **Tires:** current pressures and history.
 - **Cabin:** temperatures, humidity, PM2.5, climate and seat timelines.
