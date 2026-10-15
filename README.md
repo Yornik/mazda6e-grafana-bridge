@@ -154,13 +154,11 @@ the `location` object: its key names, not your coordinates.
 ### Speed
 
 On the same Mazda 6e (Europe backend, 2026-10-13 to 2026-10-15),
-`mazda6e_speed_kmh` never changed. During a drive of about 33 km the vehicle
-state stayed Parked in every poll, while the odometer did count the distance.
-The car seems to update its cloud condition mostly while parked, so the
-exporter has no live driving data to read. The dashboard therefore has no speed
-panel; Distance per day, from the odometer, shows the driving instead. The
-metric stays in the exporter in case a car or a firmware update does report
-speed.
+`mazda6e_speed_kmh` never changed, also in the polls where the car reported
+Driving with the power on. The odometer did count each drive. The dashboard
+therefore has no speed panel; Distance per day, from the odometer, shows the
+driving instead. The metric stays in the exporter in case a car or a firmware
+update does report speed. If yours does, please open an issue.
 
 ## Getting started
 
