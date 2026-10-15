@@ -202,7 +202,38 @@
             "mode": "thresholds"
           },
           "unit": "none",
-          "mappings": [],
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Not charging",
+                  "color": "text",
+                  "index": 0
+                },
+                "1": {
+                  "text": "Charging",
+                  "color": "green",
+                  "index": 1
+                },
+                "2": {
+                  "text": "Complete",
+                  "color": "blue",
+                  "index": 2
+                },
+                "3": {
+                  "text": "Paused",
+                  "color": "orange",
+                  "index": 3
+                },
+                "4": {
+                  "text": "Unknown",
+                  "color": "text",
+                  "index": 4
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -211,93 +242,16 @@
                 "value": null
               }
             ]
-          },
-          "displayName": "${__field.labels.state}"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "charging"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "green"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "completed"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "blue"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "paused"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "orange"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "not_charging"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "text"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "unknown"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "text"
-                }
-              }
-            ]
           }
-        ]
+        },
+        "overrides": []
       },
       "options": {
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
-        "textMode": "name",
+        "textMode": "value",
         "wideLayout": true,
         "reduceOptions": {
           "calcs": [
@@ -314,9 +268,9 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (state) (mazda6e_charge_state{vin=~\"$vin\"}) == 1",
+          "expr": "sum(mazda6e_charge_state{vin=~\"$vin\",state=\"charging\"}) + 2 * sum(mazda6e_charge_state{vin=~\"$vin\",state=\"completed\"}) + 3 * sum(mazda6e_charge_state{vin=~\"$vin\",state=\"paused\"}) + 4 * sum(mazda6e_charge_state{vin=~\"$vin\",state=\"unknown\"})",
           "refId": "A",
-          "legendFormat": "{{state}}",
+          "legendFormat": "__auto",
           "range": false,
           "instant": true
         }
@@ -911,7 +865,7 @@
     {
       "type": "stat",
       "title": "Time to limit",
-      "description": "Absent when the car has no estimate (not charging).",
+      "description": "Time until the charge limit is reached while charging. Shows 'Not charging' otherwise.",
       "id": 13,
       "datasource": {
         "type": "prometheus",
@@ -929,7 +883,23 @@
             "mode": "thresholds"
           },
           "unit": "s",
-          "mappings": [],
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "Not charging",
+                  "color": "text",
+                  "index": 0
+                },
+                "-2": {
+                  "text": "Charging",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -938,7 +908,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "noValue": "Not charging"
         },
         "overrides": []
       },
@@ -964,7 +935,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "mazda6e_charge_remaining_seconds{vin=~\"$vin\"}",
+          "expr": "(mazda6e_charge_remaining_seconds{vin=~\"$vin\"} and on(vin) mazda6e_charging{vin=~\"$vin\"} == 1) or on(vin) (mazda6e_charging{vin=~\"$vin\"} == 1) * 0 - 2 or on(vin) (mazda6e_charging{vin=~\"$vin\"} == 0) - 1",
           "refId": "A",
           "legendFormat": "__auto",
           "range": false,
@@ -988,7 +959,7 @@
     {
       "type": "timeseries",
       "title": "Distance per day",
-      "description": "Odometer increase over the preceding 24 h, one bar per day.",
+      "description": "Odometer increase per day, over the last 7 days whatever the dashboard time range, because each bar sits at midnight.",
       "id": 15,
       "datasource": {
         "type": "prometheus",
@@ -1060,7 +1031,9 @@
           "range": true
         }
       ],
-      "interval": "1d"
+      "interval": "1d",
+      "timeFrom": "7d",
+      "hideTimeOverride": false
     },
     {
       "type": "state-timeline",
@@ -1175,82 +1148,6 @@
       ]
     },
     {
-      "type": "timeseries",
-      "title": "Speed",
-      "description": "Only as fine-grained as POLL_INTERVAL_SECONDS.",
-      "id": 17,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 24,
-        "x": 0,
-        "y": 32
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "unit": "velocitykmh",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "lineInterpolation": "linear",
-            "showPoints": "never",
-            "spanNulls": 3600000,
-            "axisBorderShow": false,
-            "gradientMode": "none",
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "min": 0
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "mazda6e_speed_kmh{vin=~\"$vin\"}",
-          "refId": "A",
-          "legendFormat": "Speed",
-          "range": true
-        }
-      ]
-    },
-    {
       "type": "row",
       "title": "Body",
       "collapsed": false,
@@ -1259,7 +1156,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 38
+        "y": 32
       },
       "panels": []
     },
@@ -1276,7 +1173,7 @@
         "h": 8,
         "w": 6,
         "x": 0,
-        "y": 39
+        "y": 33
       },
       "fieldConfig": {
         "defaults": {
@@ -1357,7 +1254,7 @@
         "h": 8,
         "w": 6,
         "x": 6,
-        "y": 39
+        "y": 33
       },
       "fieldConfig": {
         "defaults": {
@@ -1438,7 +1335,7 @@
         "h": 8,
         "w": 6,
         "x": 12,
-        "y": 39
+        "y": 33
       },
       "fieldConfig": {
         "defaults": {
@@ -1519,7 +1416,7 @@
         "h": 8,
         "w": 6,
         "x": 18,
-        "y": 39
+        "y": 33
       },
       "fieldConfig": {
         "defaults": {
@@ -1596,7 +1493,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 47
+        "y": 41
       },
       "panels": []
     },
@@ -1613,7 +1510,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 48
+        "y": 42
       },
       "fieldConfig": {
         "defaults": {
@@ -1691,7 +1588,7 @@
         "h": 8,
         "w": 16,
         "x": 8,
-        "y": 48
+        "y": 42
       },
       "fieldConfig": {
         "defaults": {
@@ -1774,7 +1671,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 56
+        "y": 50
       },
       "panels": []
     },
@@ -1791,7 +1688,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 57
+        "y": 51
       },
       "fieldConfig": {
         "defaults": {
@@ -1878,7 +1775,7 @@
         "h": 8,
         "w": 6,
         "x": 12,
-        "y": 57
+        "y": 51
       },
       "fieldConfig": {
         "defaults": {
@@ -1955,7 +1852,7 @@
         "h": 8,
         "w": 6,
         "x": 18,
-        "y": 57
+        "y": 51
       },
       "fieldConfig": {
         "defaults": {
@@ -2039,7 +1936,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 65
+        "y": 59
       },
       "fieldConfig": {
         "defaults": {
@@ -2127,7 +2024,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 71
+        "y": 65
       },
       "panels": []
     },
@@ -2144,7 +2041,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 72
+        "y": 66
       },
       "fieldConfig": {
         "defaults": {
@@ -2250,7 +2147,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 82
+        "y": 76
       },
       "panels": []
     },
@@ -2267,7 +2164,7 @@
         "h": 4,
         "w": 6,
         "x": 0,
-        "y": 83
+        "y": 77
       },
       "fieldConfig": {
         "defaults": {
@@ -2347,7 +2244,7 @@
         "h": 4,
         "w": 6,
         "x": 6,
-        "y": 83
+        "y": 77
       },
       "fieldConfig": {
         "defaults": {
@@ -2420,7 +2317,7 @@
         "h": 4,
         "w": 12,
         "x": 12,
-        "y": 83
+        "y": 77
       },
       "fieldConfig": {
         "defaults": {
