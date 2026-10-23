@@ -38,6 +38,15 @@ def test_unknown_enum_value_maps_to_unknown(status):
     assert sample("mazda6e_charge_state", vin=VIN, state="unknown") == 1
     assert sample("mazda6e_charge_state", vin=VIN, state="charging") == 0
     assert sample("mazda6e_charging", vin=VIN) == 0
+    assert sample("mazda6e_charge_status_code", vin=VIN) == 99
+
+
+def test_deprecated_charge_current_keeps_the_raw_fields(status):
+    metrics.update_vehicle(VEHICLE, status)
+
+    assert sample("mazda6e_charge_current_amperes", vin=VIN, kind="total") == 15.5
+    assert sample("mazda6e_charge_current_amperes", vin=VIN, kind="ac") == 0
+    assert sample("mazda6e_charge_current_amperes", vin=VIN, kind="dc") == -7.5
 
 
 def test_charging(status):
@@ -45,7 +54,9 @@ def test_charging(status):
 
     assert sample("mazda6e_charging", vin=VIN) == 1
     assert sample("mazda6e_charge_target_soc_percent", vin=VIN) == 90
-    assert sample("mazda6e_charge_current_amperes", vin=VIN, kind="ac") == 15.5
+    assert sample("mazda6e_charger_current_amperes", vin=VIN) == 15.5
+    assert sample("mazda6e_battery_current_amperes", vin=VIN) == -7.5
+    assert sample("mazda6e_charge_status_code", vin=VIN) == 6
     assert sample("mazda6e_charge_remaining_seconds", vin=VIN) == 45 * 60
     assert sample("mazda6e_plugged_in", vin=VIN, connector="ac") == 1
     assert sample("mazda6e_plugged_in", vin=VIN, connector="dc") == 0

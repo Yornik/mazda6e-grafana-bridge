@@ -51,9 +51,23 @@ VEHICLE_STATE = Gauge(
 
 # --- charging ---
 CHARGE_TARGET = Gauge("mazda6e_charge_target_soc_percent", "Charge limit in %.", _V)
+CHARGER_CURRENT = Gauge(
+    "mazda6e_charger_current_amperes",
+    "Current from the charger in A. 0 when no charger supplies the car.",
+    _V,
+)
+BATTERY_CURRENT = Gauge(
+    "mazda6e_battery_current_amperes",
+    "High-voltage battery current in A: positive while it discharges, "
+    "negative while it charges or regenerates.",
+    _V,
+)
+# Deprecated: the ac/dc names from the Home Assistant integration are wrong for
+# this car (see the README). Kept for one release so old dashboards still work.
 CHARGE_CURRENT = Gauge(
     "mazda6e_charge_current_amperes",
-    "Charge current in A; kind is total, ac or dc.",
+    "Deprecated, use mazda6e_charger_current_amperes and "
+    "mazda6e_battery_current_amperes. Raw currents; kind is total, ac or dc.",
     ("vin", "kind"),
 )
 CHARGE_REMAINING = Gauge(
@@ -65,6 +79,11 @@ CHARGE_STATE = Gauge(
     "mazda6e_charge_state",
     "1 for the current charge state (not_charging/charging/completed/paused/unknown), else 0.",
     ("vin", "state"),
+)
+CHARGE_STATUS_CODE = Gauge(
+    "mazda6e_charge_status_code",
+    "chargeStatus exactly as the car sends it, to decode states shown as unknown.",
+    _V,
 )
 CHARGING = Gauge("mazda6e_charging", "1 while the car is charging.", _V)
 PLUGGED_IN = Gauge(
@@ -228,6 +247,12 @@ def update_vehicle(vehicle: Vehicle, status: dict, *, export_location: bool = Fa
 
     charge = status.get("charge") or {}
     _set(CHARGE_TARGET, _number(charge.get("maxSocPercent")), vin)
+    # Seen on a real car: chargeCurrent follows the charger (8 A at home, 360 A
+    # at a fast charger) and is 0 while driving. dcChargeCurrent is negative in
+    # every charge session, AC included, and swings between +250 A and -250 A
+    # while driving, so it is the battery current. acChargeCurrent stays 0.
+    _set(CHARGER_CURRENT, _number(charge.get("chargeCurrent")), vin)
+    _set(BATTERY_CURRENT, _number(charge.get("dcChargeCurrent")), vin)
     for kind, key in (
         ("total", "chargeCurrent"),
         ("ac", "acChargeCurrent"),
@@ -242,6 +267,7 @@ def update_vehicle(vehicle: Vehicle, status: dict, *, export_location: bool = Fa
     )
     _set_enum(CHARGE_STATE, vin, charge.get("chargeStatus"), CHARGE_STATES)
     charge_status = _number(charge.get("chargeStatus"))
+    _set(CHARGE_STATUS_CODE, charge_status, vin)
     _set(CHARGING, None if charge_status is None else float(charge_status == 6), vin)
     for connector, key in (("ac", "chargeConStatus"), ("dc", "dcChargeGunConnectStatus")):
         _set(PLUGGED_IN, _flag(charge.get(key)), vin, connector)
