@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.1.0](https://github.com/Yornik/mazda6e-grafana-bridge/compare/v1.0.0...v1.1.0) (2026-10-23)
+
+
+### Features
+
+* charger and battery current, raw charge status, dashboard fixes from real data ([9daaa26](https://github.com/Yornik/mazda6e-grafana-bridge/commit/9daaa26145e00d2316c26d75e21faacd3825f3f0))
+* **metrics:** export charger and battery current, and the raw charge status ([a748b28](https://github.com/Yornik/mazda6e-grafana-bridge/commit/a748b28146efcd97311845aac42d38b1f71d1cd8))
+
+
+### Bug Fixes
+
+* **dashboard:** "Not charging" in Time to limit whenever the car is not charging ([2aa8e64](https://github.com/Yornik/mazda6e-grafana-bridge/commit/2aa8e64a52427b1e6cad75bc96bcab0e0bedb687))
+* **dashboard:** correct charging current, distance per day and data age ([42b5371](https://github.com/Yornik/mazda6e-grafana-bridge/commit/42b537149bce6f0c4fdede3a5807b2b34a074d40))
+* **dashboard:** drop the Speed panel and say "Not charging" instead of No data ([fd49091](https://github.com/Yornik/mazda6e-grafana-bridge/commit/fd49091855ab7862b695b398a11bd4e6534f349d))
+* **dashboard:** drop the Speed panel and say "Not charging" instead of No data ([7c0c5e6](https://github.com/Yornik/mazda6e-grafana-bridge/commit/7c0c5e66c613dc86ea1feabdcb810f3ef5aa935f))
+* **dashboard:** show the last 7 days in Distance per day; correct the speed note ([9c90a59](https://github.com/Yornik/mazda6e-grafana-bridge/commit/9c90a59a91994c6d7b39782addfbad2f465ed4da))
+
 ## 1.0.0 (2026-10-13)
 
 
