@@ -1159,6 +1159,86 @@
       ]
     },
     {
+      "type": "timeseries",
+      "title": "Battery current while driving",
+      "description": "High-voltage battery current while the car reports Driving. Above 0 the battery drives the car; below 0 regenerative braking charges it. Each point is one reading, about 1 every 2 minutes, not a continuous trace.",
+      "id": 37,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "amp",
+          "custom": {
+            "drawStyle": "points",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "lineInterpolation": "stepAfter",
+            "showPoints": "always",
+            "spanNulls": false,
+            "axisBorderShow": false,
+            "gradientMode": "none",
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            },
+            "pointSize": 6
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              },
+              {
+                "color": "text",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"}) and on(vin) max by (vin) (mazda6e_vehicle_state{vin=~\"$vin\",state=\"driving\"}) == 1",
+          "refId": "A",
+          "legendFormat": "Battery current",
+          "range": true
+        }
+      ]
+    },
+    {
       "type": "row",
       "title": "Body",
       "collapsed": false,
@@ -1167,7 +1247,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 32
+        "y": 40
       },
       "panels": []
     },
@@ -1184,7 +1264,7 @@
         "h": 8,
         "w": 6,
         "x": 0,
-        "y": 33
+        "y": 41
       },
       "fieldConfig": {
         "defaults": {
@@ -1265,7 +1345,7 @@
         "h": 8,
         "w": 6,
         "x": 6,
-        "y": 33
+        "y": 41
       },
       "fieldConfig": {
         "defaults": {
@@ -1346,7 +1426,7 @@
         "h": 8,
         "w": 6,
         "x": 12,
-        "y": 33
+        "y": 41
       },
       "fieldConfig": {
         "defaults": {
@@ -1427,7 +1507,7 @@
         "h": 8,
         "w": 6,
         "x": 18,
-        "y": 33
+        "y": 41
       },
       "fieldConfig": {
         "defaults": {
@@ -1504,7 +1584,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 41
+        "y": 49
       },
       "panels": []
     },
@@ -1521,7 +1601,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 42
+        "y": 50
       },
       "fieldConfig": {
         "defaults": {
@@ -1599,7 +1679,7 @@
         "h": 8,
         "w": 16,
         "x": 8,
-        "y": 42
+        "y": 50
       },
       "fieldConfig": {
         "defaults": {
@@ -1682,7 +1762,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 50
+        "y": 58
       },
       "panels": []
     },
@@ -1699,7 +1779,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 51
+        "y": 59
       },
       "fieldConfig": {
         "defaults": {
@@ -1786,7 +1866,7 @@
         "h": 8,
         "w": 6,
         "x": 12,
-        "y": 51
+        "y": 59
       },
       "fieldConfig": {
         "defaults": {
@@ -1863,7 +1943,7 @@
         "h": 8,
         "w": 6,
         "x": 18,
-        "y": 51
+        "y": 59
       },
       "fieldConfig": {
         "defaults": {
@@ -1947,7 +2027,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 59
+        "y": 67
       },
       "fieldConfig": {
         "defaults": {
@@ -2035,7 +2115,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 65
+        "y": 73
       },
       "panels": []
     },
@@ -2052,7 +2132,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 66
+        "y": 74
       },
       "fieldConfig": {
         "defaults": {
@@ -2158,7 +2238,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 76
+        "y": 84
       },
       "panels": []
     },
@@ -2175,7 +2255,7 @@
         "h": 4,
         "w": 6,
         "x": 0,
-        "y": 77
+        "y": 85
       },
       "fieldConfig": {
         "defaults": {
@@ -2255,7 +2335,7 @@
         "h": 4,
         "w": 6,
         "x": 6,
-        "y": 77
+        "y": 85
       },
       "fieldConfig": {
         "defaults": {
@@ -2328,7 +2408,7 @@
         "h": 4,
         "w": 12,
         "x": 12,
-        "y": 77
+        "y": 85
       },
       "fieldConfig": {
         "defaults": {
