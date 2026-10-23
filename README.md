@@ -97,7 +97,10 @@ All per-vehicle series carry a `vin` label.
 | `mazda6e_charge_state` | `state` | One-hot: `not_charging` / `charging` / `completed` / `paused` / `unknown` |
 | `mazda6e_charging` | | `1` while charging |
 | `mazda6e_charge_target_soc_percent` | | Charge limit in % |
-| `mazda6e_charge_current_amperes` | `kind` | `total`, `ac`, `dc` |
+| `mazda6e_charge_status_code` | | `chargeStatus` as the car sends it. Use it to decode a state that `mazda6e_charge_state` shows as `unknown`. |
+| `mazda6e_charger_current_amperes` | | Current from the charger in A. `0` when no charger supplies the car. |
+| `mazda6e_battery_current_amperes` | | High-voltage battery current in A. Positive while it discharges, negative while it charges or regenerates. See [Charging current](#charging-current). |
+| `mazda6e_charge_current_amperes` | `kind` | Deprecated. `total`, `ac`, `dc` as the API names them. Removed in a later release. |
 | `mazda6e_charge_remaining_seconds` | | Time until the limit is reached. Absent when the car has no estimate. |
 | `mazda6e_plugged_in` | `connector` | `ac`, `dc` |
 | `mazda6e_door_open` | `door` | `front_left`, `front_right`, `rear_left`, `rear_right`, `trunk` |
@@ -159,6 +162,22 @@ Driving with the power on. The odometer did count each drive. The dashboard
 therefore has no speed panel; Distance per day, from the odometer, shows the
 driving instead. The metric stays in the exporter in case a car or a firmware
 update does report speed. If yours does, please open an issue.
+
+### Charging current
+
+The API sends three currents. Their names come from the Home Assistant
+integration, but on a real Mazda 6e (Europe backend, 2026-10-13 to
+2026-10-23, 6 charge sessions and about 1000 km) they behave differently:
+
+| API field | Name suggests | What the car sends | Exported as |
+| --- | --- | --- | --- |
+| `chargeCurrent` | Total charge current | Follows the charger: about 8 A at a home wallbox, 45 A on a faster AC charger, 360 A at a fast charger. `0` while driving. | `mazda6e_charger_current_amperes` |
+| `dcChargeCurrent` | DC charge current | Negative in every charge session, AC included. Between +250 A and -250 A while driving, which matches acceleration and regenerative braking. | `mazda6e_battery_current_amperes` |
+| `acChargeCurrent` | AC charge current | Always `0` | Only in the deprecated metric |
+
+That `dcChargeCurrent` is the battery current is a conclusion from this data,
+not something Mazda documents. The deprecated `mazda6e_charge_current_amperes`
+still has all three fields with their API names, for one release.
 
 ## Getting started
 
@@ -234,8 +253,9 @@ scrape interval is plenty. Then import the dashboard; see
 [`dashboards/mazda6e.json`](dashboards/mazda6e.json) has these sections:
 
 - **Overview:** state of charge, range, charge state, locks, odometer and data age.
-- **Battery & charging:** SoC against the charge limit, range, AC/DC current,
-  plug/charge timeline and time to limit.
+- **Battery & charging:** SoC against the charge limit, range, charger and
+  battery current (see [Charging current](#charging-current)), plug/charge
+  timeline and time to limit.
 - **Driving:** distance per day, vehicle and power state. There is no speed panel; see [Speed](#speed).
 - **Body:** door, trunk, window, lock and lamp timelines.
 - **Tires:** current pressures and history.

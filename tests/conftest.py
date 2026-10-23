@@ -28,8 +28,8 @@ STATUS = {
     "charge": {
         "maxSocPercent": 90,
         "chargeCurrent": 15.5,
-        "acChargeCurrent": 15.5,
-        "dcChargeCurrent": 0,
+        "acChargeCurrent": 0,
+        "dcChargeCurrent": -7.5,
         "remainChargeTime": 45,
         "chargeStatus": 6,
         "chargeConStatus": 1,
