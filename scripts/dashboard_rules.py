@@ -11,7 +11,7 @@ import json
 import sys
 
 # Grafana template variables, replaced with something the parser accepts.
-VARIABLES = {"$vin": ".*", "${vin}": ".*"}
+VARIABLES = {"$vin": ".*", "${vin}": ".*", "$__interval": "5m"}
 
 
 def expressions(dashboard: dict) -> list[tuple[str, str]]:

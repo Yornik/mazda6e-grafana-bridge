@@ -697,7 +697,7 @@
     {
       "type": "timeseries",
       "title": "Charging current",
-      "description": "Current from the charger, and the current that goes into the high-voltage battery while a charger supplies the car. At a fast charger the two are about equal. On AC the battery current is lower, because the battery voltage is higher than the grid voltage.",
+      "description": "From charger is the current the charger supplies. Into battery is the current that charges the battery, so read it for charging speed: 100 A is about 40 kW. On AC the battery gets about half the charger's amps, because the battery runs at about 400 V and the grid at 230 V. At a DC fast charger the two are about the same, and many times higher than on AC. Ranges over 12 days skip some readings, so Max can read low.",
       "id": 11,
       "datasource": {
         "type": "prometheus",
@@ -718,10 +718,10 @@
           "custom": {
             "drawStyle": "line",
             "lineWidth": 2,
-            "fillOpacity": 10,
+            "fillOpacity": 0,
             "lineInterpolation": "stepAfter",
             "showPoints": "never",
-            "spanNulls": 3600000,
+            "spanNulls": false,
             "axisBorderShow": false,
             "gradientMode": "none",
             "stacking": {
@@ -730,7 +730,8 @@
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "axisSoftMax": 50
           },
           "thresholds": {
             "mode": "absolute",
@@ -743,13 +744,67 @@
           },
           "min": 0
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8a8a8a"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 15
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#A352CC"
+                }
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "always"
+              },
+              {
+                "id": "custom.pointSize",
+                "value": 2
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": [
+            "max"
+          ]
         },
         "tooltip": {
           "mode": "multi",
@@ -765,7 +820,7 @@
           "editorMode": "code",
           "expr": "max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"})",
           "refId": "A",
-          "legendFormat": "Charger",
+          "legendFormat": "From charger",
           "range": true
         },
         {
@@ -774,12 +829,14 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "-min by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"}) and on(vin) max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"}) > 0",
+          "expr": "(-min by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"}) and on(vin) max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"}) > 0) or on(vin) 0 * ((max_over_time((max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"}))[$__interval:1m] offset 1m) > 0) or on(vin) (max_over_time((max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"}))[$__interval:1m] offset -$__interval) > 0))",
           "refId": "B",
           "legendFormat": "Into battery",
           "range": true
         }
-      ]
+      ],
+      "interval": "1m",
+      "maxDataPoints": 5000
     },
     {
       "type": "state-timeline",
@@ -1159,6 +1216,150 @@
       ]
     },
     {
+      "type": "timeseries",
+      "title": "Battery current while driving",
+      "description": "Draw (above 0) is current the car takes from the battery. Regen braking (below 0) is current that braking puts back. Each dot is one reading, sent about every 2 minutes, so short peaks fall between dots. Ranges over 12 days show only some of the readings.",
+      "id": 37,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "amp",
+          "custom": {
+            "drawStyle": "points",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "lineInterpolation": "stepAfter",
+            "showPoints": "always",
+            "spanNulls": false,
+            "axisBorderShow": false,
+            "gradientMode": "none",
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            },
+            "pointSize": 6,
+            "axisSoftMin": -50,
+            "axisSoftMax": 100
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              },
+              {
+                "color": "text",
+                "value": 0
+              }
+            ]
+          },
+          "decimals": 0,
+          "noValue": "No driving data in this time range"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#c98500"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#A352CC"
+                }
+              },
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "custom.barWidthFactor",
+                "value": 0.05
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 100
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"}) >= 0 and on(vin) max by (vin) (mazda6e_vehicle_state{vin=~\"$vin\",state=\"driving\"}) == 1",
+          "refId": "A",
+          "legendFormat": "Draw",
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"}) < 0 and on(vin) max by (vin) (mazda6e_vehicle_state{vin=~\"$vin\",state=\"driving\"}) == 1",
+          "refId": "B",
+          "legendFormat": "Regen braking",
+          "range": true
+        }
+      ],
+      "interval": "2m",
+      "maxDataPoints": 5000
+    },
+    {
       "type": "row",
       "title": "Body",
       "collapsed": false,
@@ -1167,7 +1368,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 32
+        "y": 40
       },
       "panels": []
     },
@@ -1184,7 +1385,7 @@
         "h": 8,
         "w": 6,
         "x": 0,
-        "y": 33
+        "y": 41
       },
       "fieldConfig": {
         "defaults": {
@@ -1265,7 +1466,7 @@
         "h": 8,
         "w": 6,
         "x": 6,
-        "y": 33
+        "y": 41
       },
       "fieldConfig": {
         "defaults": {
@@ -1346,7 +1547,7 @@
         "h": 8,
         "w": 6,
         "x": 12,
-        "y": 33
+        "y": 41
       },
       "fieldConfig": {
         "defaults": {
@@ -1427,7 +1628,7 @@
         "h": 8,
         "w": 6,
         "x": 18,
-        "y": 33
+        "y": 41
       },
       "fieldConfig": {
         "defaults": {
@@ -1504,7 +1705,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 41
+        "y": 49
       },
       "panels": []
     },
@@ -1521,7 +1722,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 42
+        "y": 50
       },
       "fieldConfig": {
         "defaults": {
@@ -1599,7 +1800,7 @@
         "h": 8,
         "w": 16,
         "x": 8,
-        "y": 42
+        "y": 50
       },
       "fieldConfig": {
         "defaults": {
@@ -1682,7 +1883,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 50
+        "y": 58
       },
       "panels": []
     },
@@ -1699,7 +1900,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 51
+        "y": 59
       },
       "fieldConfig": {
         "defaults": {
@@ -1786,7 +1987,7 @@
         "h": 8,
         "w": 6,
         "x": 12,
-        "y": 51
+        "y": 59
       },
       "fieldConfig": {
         "defaults": {
@@ -1863,7 +2064,7 @@
         "h": 8,
         "w": 6,
         "x": 18,
-        "y": 51
+        "y": 59
       },
       "fieldConfig": {
         "defaults": {
@@ -1947,7 +2148,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 59
+        "y": 67
       },
       "fieldConfig": {
         "defaults": {
@@ -2035,7 +2236,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 65
+        "y": 73
       },
       "panels": []
     },
@@ -2052,7 +2253,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 66
+        "y": 74
       },
       "fieldConfig": {
         "defaults": {
@@ -2158,7 +2359,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 76
+        "y": 84
       },
       "panels": []
     },
@@ -2175,7 +2376,7 @@
         "h": 4,
         "w": 6,
         "x": 0,
-        "y": 77
+        "y": 85
       },
       "fieldConfig": {
         "defaults": {
@@ -2255,7 +2456,7 @@
         "h": 4,
         "w": 6,
         "x": 6,
-        "y": 77
+        "y": 85
       },
       "fieldConfig": {
         "defaults": {
@@ -2328,7 +2529,7 @@
         "h": 4,
         "w": 12,
         "x": 12,
-        "y": 77
+        "y": 85
       },
       "fieldConfig": {
         "defaults": {
