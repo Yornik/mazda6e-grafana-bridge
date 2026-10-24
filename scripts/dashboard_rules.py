@@ -14,13 +14,26 @@ import sys
 VARIABLES = {"$vin": ".*", "${vin}": ".*", "$__interval": "5m"}
 
 
+def constants(dashboard: dict) -> dict[str, str]:
+    """The dashboard's constant variables, such as the battery voltage, by name."""
+    return {
+        v["name"]: v["query"]
+        for v in dashboard.get("templating", {}).get("list", [])
+        if v.get("type") == "constant"
+    }
+
+
 def expressions(dashboard: dict) -> list[tuple[str, str]]:
+    variables = dict(VARIABLES)
+    for name, value in constants(dashboard).items():
+        variables[f"${{{name}}}"] = value
+        variables[f"${name}"] = value
     found = []
     for panel in dashboard.get("panels", []):
         for target in panel.get("targets", []):
             expr = target.get("expr")
             if expr:
-                for name, value in VARIABLES.items():
+                for name, value in variables.items():
                     expr = expr.replace(name, value)
                 found.append((f"{panel['title']} / {target['refId']}", expr))
     return found

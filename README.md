@@ -179,6 +179,23 @@ That `dcChargeCurrent` is the battery current is a conclusion from this data,
 not something Mazda documents. The deprecated `mazda6e_charge_current_amperes`
 still has all three fields with their API names, for one release.
 
+### Power on the dashboard
+
+The car reports current, not voltage, so the dashboard shows power in kW as
+current times a fixed voltage. Two hidden dashboard constants hold the
+voltages:
+
+| Variable | Default | Used for |
+| --- | --- | --- |
+| `battery_voltage` | `379` | The battery, and a DC fast charger. 379 V is the nominal voltage of the 68.8 kWh LFP pack ([EV Database](https://ev-database.org/car/3107/Mazda-6e-688-kWh)). For the 78 kWh pack, set it to `364` ([EV Database](https://ev-database.org/car/3466/Mazda-6e-78-kWh)). |
+| `grid_voltage` | `230` | An AC charger. |
+
+An LFP pack keeps an almost flat voltage over most of its charge, so the
+estimate stays close. On the real car, AC charging gave about 45 A x 230 V =
+10.4 kW from the grid and 24.5 A x 379 V = 9.3 kW into the battery: about 90 %,
+a normal charging loss. To change a value, edit the variable in the dashboard
+settings, or add `var-battery_voltage=364` to the dashboard URL.
+
 ## Getting started
 
 You need a Mazda app account that already has the car on it, and Docker, or
@@ -253,10 +270,10 @@ scrape interval is plenty. Then import the dashboard; see
 [`dashboards/mazda6e.json`](dashboards/mazda6e.json) has these sections:
 
 - **Overview:** state of charge, range, charge state, locks, odometer and data age.
-- **Battery & charging:** SoC against the charge limit, range, charger and
-  battery current (see [Charging current](#charging-current)), plug/charge
+- **Battery & charging:** SoC against the charge limit, range, charging power
+  from the charger and into the battery (see [Power on the dashboard](#power-on-the-dashboard)), plug/charge
   timeline and time to limit.
-- **Driving:** distance per day, vehicle and power state. There is no speed panel; see [Speed](#speed).
+- **Driving:** distance per day, vehicle and power state, and battery power while driving (draw and regenerative braking). There is no speed panel; see [Speed](#speed).
 - **Body:** door, trunk, window, lock and lamp timelines.
 - **Tires:** current pressures and history.
 - **Cabin:** temperatures, humidity, PM2.5, climate and seat timelines.
