@@ -15,11 +15,11 @@ VARIABLES = {"$vin": ".*", "${vin}": ".*", "$__interval": "5m"}
 
 
 def constants(dashboard: dict) -> dict[str, str]:
-    """The dashboard's constant variables, such as the battery voltage, by name."""
+    """Default values of the constant and textbox variables, such as the battery voltage."""
     return {
         v["name"]: v["query"]
         for v in dashboard.get("templating", {}).get("list", [])
-        if v.get("type") == "constant"
+        if v.get("type") in ("constant", "textbox")
     }
 
 

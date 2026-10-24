@@ -182,7 +182,7 @@ still has all three fields with their API names, for one release.
 ### Power on the dashboard
 
 The car reports current, not voltage, so the dashboard shows power in kW as
-current times a fixed voltage. Two hidden dashboard constants hold the
+current times a fixed voltage. Two hidden dashboard variables hold the
 voltages:
 
 | Variable | Default | Used for |
@@ -193,8 +193,9 @@ voltages:
 An LFP pack keeps an almost flat voltage over most of its charge, so the
 estimate stays close. On the real car, AC charging gave about 45 A x 230 V =
 10.4 kW from the grid and 24.5 A x 379 V = 9.3 kW into the battery: about 90 %,
-a normal charging loss. To change a value, edit the variable in the dashboard
-settings, or add `var-battery_voltage=364` to the dashboard URL.
+a normal charging loss. To use another value, add it to the dashboard URL, for
+example `&var-battery_voltage=364`, and bookmark that URL. To change the
+default, edit the variable in the dashboard JSON.
 
 ## Getting started
 
