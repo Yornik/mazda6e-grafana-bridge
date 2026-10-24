@@ -30,6 +30,13 @@ def test_every_queried_metric_is_exported():
     assert queried - exported_names() == set()
 
 
+def test_every_query_variable_is_replaced():
+    # A variable that the dashboard does not define reaches Prometheus as text,
+    # for example "* $battery_voltage", and the panel shows an error.
+    for where, expr in expressions(load()):
+        assert "$" not in expr, where
+
+
 def test_panel_ids_are_unique_and_layout_does_not_overlap():
     panels = load()["panels"]
     ids = [p["id"] for p in panels]
