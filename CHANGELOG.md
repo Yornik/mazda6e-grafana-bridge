@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.2.0](https://github.com/Yornik/mazda6e-grafana-bridge/compare/v1.1.0...v1.2.0) (2026-10-24)
+
+
+### Features
+
+* **dashboard:** add "Battery current while driving" ([1bd09de](https://github.com/Yornik/mazda6e-grafana-bridge/commit/1bd09de60fc88f06a8a6909e0c94e010b83d590e))
+* **dashboard:** battery current while driving, and clearer charging current ([1bc8f43](https://github.com/Yornik/mazda6e-grafana-bridge/commit/1bc8f437fdcfa2f12eb374c64da5083e53a3adac))
+* **dashboard:** clearer charging and driving current panels ([0f33ad2](https://github.com/Yornik/mazda6e-grafana-bridge/commit/0f33ad2cccd088b44553aee73ca1f26f78986bb5))
+* **dashboard:** show charging and driving power in kW, not amps ([a21d589](https://github.com/Yornik/mazda6e-grafana-bridge/commit/a21d58908f129431906e93e65e02f5833cac03ad))
+* **dashboard:** show charging and driving power in kW, not amps ([5d08743](https://github.com/Yornik/mazda6e-grafana-bridge/commit/5d087438783c82b915af52a4f1f62574b54dae13))
+
+
+### Bug Fixes
+
+* **dashboard:** keep short charge sessions at long ranges ([d475b63](https://github.com/Yornik/mazda6e-grafana-bridge/commit/d475b63f30867e92e982b1578de4abe1f74da8ae))
+* **dashboard:** keep whole numbers on the kW axes ([4d7cfc5](https://github.com/Yornik/mazda6e-grafana-bridge/commit/4d7cfc52fd0e695c88b61f61360e21bf71f06818))
+* **dashboard:** make the voltages settable from the URL ([cf5986d](https://github.com/Yornik/mazda6e-grafana-bridge/commit/cf5986d3f204915351811f5ad6fa7d272197ac62))
+
 ## [1.1.0](https://github.com/Yornik/mazda6e-grafana-bridge/compare/v1.0.0...v1.1.0) (2026-10-23)
 
 
